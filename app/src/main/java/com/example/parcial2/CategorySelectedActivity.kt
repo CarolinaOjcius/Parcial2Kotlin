@@ -1,9 +1,7 @@
 package com.example.parcial2
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
@@ -12,33 +10,32 @@ import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class MainActivity : AppCompatActivity() {
-
+class CategorySelectedActivity : AppCompatActivity() {
+    private lateinit var textViewCategorySelected: TextView
     private lateinit var textViewJoke: TextView
-    private lateinit var buttonContinue: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_category_selected)
 
-        textViewJoke = findViewById(R.id.textViewJoke)
-        buttonContinue=findViewById(R.id.buttonContinue)
-        getRandomJoke()
+        textViewCategorySelected= findViewById(R.id.textViewCategorySelected)
+        textViewJoke= findViewById(R.id.textViewCategoryJoke)
 
-        buttonContinue.setOnClickListener(){
-            val intent = Intent(this, CategoriesActivity::class.java)
-            startActivity(intent)
-        }
+        val bundle = intent.extras
+        val category = bundle?.getString("category", "")
+        textViewCategorySelected.text = category.toString().uppercase()
 
+        getByCategory(category)
     }
 
-    private fun getRandomJoke() {
+    private fun getByCategory(category: String?) {
         CoroutineScope(Dispatchers.IO).launch {
-            val call = getRetrofit().create(ApiService::class.java).getRandomJoke("random")
+            val call = getRetrofit().create(ApiService::class.java).getByCategory("random?category=$category")
             val response = call.body()
 
             runOnUiThread {
                 if (call.isSuccessful) {
-                    val joke = response?.joke
+                    val joke = response?.value
                     if (joke != null) {
                         textViewJoke.text=joke
                     }
@@ -50,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showError() {
-        Toast.makeText(this, "fallo en la llamada", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Failed to make API call", Toast.LENGTH_SHORT).show()
     }
 
     private fun getRetrofit(): Retrofit {
@@ -59,5 +56,4 @@ class MainActivity : AppCompatActivity() {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-
 }
